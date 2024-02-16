@@ -139,7 +139,7 @@ jobs:
         run: terraform validate -no-color
         working-directory: infra-as-code/terraform/sample-aws
       - name: unlocking statefile
-        id: validate-Infra
+        id: unlocking
         run: terraform force-unlock 302767c9-a713-f81d-cf1b-393dc958d02a
         working-directory: infra-as-code/terraform/sample-aws
       - name: Terraform Plan - Infra creation
