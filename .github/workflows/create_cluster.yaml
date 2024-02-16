@@ -140,7 +140,7 @@ jobs:
         working-directory: infra-as-code/terraform/sample-aws
       - name: unlocking statefile
         id: unlocking
-        run: terraform force-unlock 302767c9-a713-f81d-cf1b-393dc958d02a -auto-approve
+        run: terraform force-unlock 302767c9-a713-f81d-cf1b-393dc958d02a-auto-approve
         working-directory: infra-as-code/terraform/sample-aws
       - name: Terraform Plan - Infra creation
         id: plan-Infra
