@@ -6,10 +6,10 @@ on:
       - master
   workflow_dispatch:
     inputs:
-      someInput:
-        description: 'Some description for the input'
-        required: false
-        default: 'default value'       
+      destroyCommand:
+        description: 'Type "destroy" to run the terraform_infra_destruction job.'
+        required: true
+        default: ''   
 jobs:
   Input_validation:
     if: ${{ github.event_name == 'push' }}
@@ -274,7 +274,7 @@ jobs:
   
                    
   terraform_infra_destruction:
-    if: ${{ github.event_name == 'workflow_dispatch' }}
+    if: ${{ github.event_name == 'workflow_dispatch' && github.event.inputs.destroyCommand == 'destroy' }}
     runs-on: ubuntu-latest
     env:
       TF_IN_AUTOMATION: "true"
