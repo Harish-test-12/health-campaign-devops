@@ -41,6 +41,11 @@ resource "aws_iam_role_policy_attachment" "cluster_AmazonEKSServicePolicy" {
   role       = "${aws_iam_role.eks_iam.name}"
 }
 
+resource "aws_iam_role_policy_attachment" "cluster_AmazonEBSCSIDriverPolicy" {
+  policy_arn = "arn:aws:iam::aws:policy/service-role/AmazonEBSCSIDriverPolicy"
+  role       = "${aws_iam_role.eks_iam.name}"
+}
+
 resource "aws_eks_cluster" "eks_cluster" {
   name     = "${var.cluster_name}"
   role_arn = "${aws_iam_role.eks_iam.arn}"
@@ -55,5 +60,6 @@ resource "aws_eks_cluster" "eks_cluster" {
   depends_on = [
     "aws_iam_role_policy_attachment.cluster_AmazonEKSClusterPolicy",
     "aws_iam_role_policy_attachment.cluster_AmazonEKSServicePolicy",
+    "aws_iam_role_policy_attachment.cluster_AmazonEBSCSIDriverPolicy",
   ]  
 }
