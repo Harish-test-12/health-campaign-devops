@@ -12,6 +12,7 @@ on:
         default: 'default value'       
 jobs:
   Input_validation:
+    if: ${{ github.event_name == 'push' }}
     runs-on: ubuntu-latest
     env:
       TF_IN_AUTOMATION: "true"
@@ -88,6 +89,7 @@ jobs:
       #   working-directory: infra-as-code/terraform/sample-aws       
 
   Terraform_Infra_Creation:
+    if: ${{ github.event_name == 'push' }}
     needs: input_validation
     runs-on: ubuntu-latest
     env:
@@ -196,6 +198,7 @@ jobs:
           path: config-as-code.tar.gz      
 
   DIGIT-deployment:
+    if: ${{ github.event_name == 'push' }}
     needs: Terraform_Infra_Creation
     runs-on: ubuntu-latest
     env:
