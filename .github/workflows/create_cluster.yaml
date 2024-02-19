@@ -3,12 +3,16 @@ name: DIGITClusterworkflow
 on:
   push:
     branches:
-      - kubernetes-1.27   
+      - kubernetes-1.27
+  workflow_dispatch:
+    inputs:
+      someInput:
+        description: 'Some description for the input'
+        required: false
+        default: 'default value'       
 jobs:
   Input_validation:
     runs-on: ubuntu-latest
-    outputs:
-      destroy: ${{ steps.check_destroy.outputs.is_destroy }}
     env:
       TF_IN_AUTOMATION: "true"
       AWS_ACCESS_KEY_ID:  ${{ secrets.AWS_ACCESS_KEY_ID }}
@@ -16,17 +20,6 @@ jobs:
       AWS_DEFAULT_REGION:  ${{ secrets.AWS_DEFAULT_REGION }}
       AWS_REGION:  ${{ secrets.AWS_REGION }}
     steps:
-      - name: Check for Destroy in Commit Message
-        id: check_destroy
-        run: |
-          echo "Checking commit message for 'destroy'..."
-          commit_message=$(git log -1 --pretty=%B)
-          echo "Commit message: $commit_message"
-          if [[ "$commit_message" == *"destroy"* ]]; then
-            echo "::set-output name=is_destroy::true"
-          else
-            echo "::set-output name=is_destroy::false"
-          fi
       - name: Checkout code
         uses: actions/checkout@v2
       - name: Build project
@@ -95,8 +88,7 @@ jobs:
       #   working-directory: infra-as-code/terraform/sample-aws       
 
   Terraform_Infra_Creation:
-    needs: Input_validation
-    if: ${{ needs.Input_validation.outputs.destroy == 'false' }}
+    needs: input_validation
     runs-on: ubuntu-latest
     env:
       TF_IN_AUTOMATION: "true"
@@ -152,6 +144,10 @@ jobs:
         id: validate-Infra
         run: terraform validate -no-color
         working-directory: infra-as-code/terraform/sample-aws
+      # - name: unlocking statefile
+      #   id: unlocking
+      #   run: terraform force-unlock -force 302767c9-a713-f81d-cf1b-393dc958d02a
+      #   working-directory: infra-as-code/terraform/sample-aws
       - name: Terraform Plan - Infra creation
         id: plan-Infra
         run: terraform plan -no-color -input=false -var db_password=demo123456   
@@ -201,7 +197,6 @@ jobs:
 
   DIGIT-deployment:
     needs: Terraform_Infra_Creation
-    if: ${{ needs.Input_validation.outputs.destroy == 'false' }}
     runs-on: ubuntu-latest
     env:
       TF_IN_AUTOMATION: "true"
@@ -275,9 +270,8 @@ jobs:
           AWS_REGION:  ${{ secrets.AWS_REGION }}  
   
                    
-  Terraform_infra_destruction:
-    needs: input_validation
-    if: ${{ needs.input_validation.outputs.destroy == 'true' }}
+  terraform_infra_destruction:
+    if: ${{ github.event_name == 'workflow_dispatch' }}
     runs-on: ubuntu-latest
     env:
       TF_IN_AUTOMATION: "true"
@@ -321,3 +315,33 @@ jobs:
       - name: Terraform Destroy - Infra destruction
         run: terraform destroy -no-color -auto-approve -var db_password=demo123456
         working-directory: infra-as-code/terraform/sample-aws
+      - name: Install AWS IAM Authenticator
+        run: |
+          curl -o aws-iam-authenticator https://amazon-eks.s3.us-west-2.amazonaws.com/1.19.6/2021-01-05/bin/linux/amd64/aws-iam-authenticator
+          chmod +x ./aws-iam-authenticator
+          sudo mv ./aws-iam-authenticator /usr/local/bin/aws-iam-authenticator
+          aws-iam-authenticator version  
+      - name: Generate kubeconfig
+        run: |
+          aws eks update-kubeconfig --region ${{ secrets.AWS_REGION }} --name $CLUSTER_NAME
+          cat ~/.kube/config > kubeconfig
+      - name: Deleting Loadbalancer 
+        run: kubectl delete svc nginx-ingress-controller -n egov       
+      - name: Terraform Init - remotestate
+        run: terraform init
+        working-directory: infra-as-code/terraform/sample-aws/remote-state
+      - name: Terraform Validate - remotestate
+        run: terraform validate -no-color
+        working-directory: infra-as-code/terraform/sample-aws/remote-state
+      - name: Terraform Init - Infra destruction
+        run: terraform init
+        working-directory: infra-as-code/terraform/sample-aws
+      - name: Terraform Validate - Infra destruction
+        run: terraform validate -no-color
+        working-directory: infra-as-code/terraform/sample-aws
+      - name: Terraform Plan - Infra destruction
+        run: terraform plan -destroy -no-color -input=false -var db_password=demo123456
+        working-directory: infra-as-code/terraform/sample-aws
+      - name: Terraform Destroy - Infra destruction
+        run: terraform destroy -no-color -auto-approve -var db_password=demo123456
+        working-directory: infra-as-code/terraform/sample-aws  
