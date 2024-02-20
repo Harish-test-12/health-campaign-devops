@@ -60,7 +60,7 @@ output "worker_security_group_id" {
   value       = module.eks.worker_security_group_id
 }
 
-output "eks_cluster_iam_role" {
-  description = "The IAM role used by the EKS cluster"
-  value       = module.eks.aws_iam_role.cluster[0].name
+output "eks_cluster_iam_role_name" {
+  value = module.eks.cluster_iam_role_name
 }
+
