@@ -298,7 +298,19 @@ jobs:
         working-directory: infra-as-code/terraform/sample-aws/remote-state
       - name: Updating different files based on parameters provided in input.yaml
         run: go run init.go
-        working-directory: infra-as-code/terraform/scripts    
+        working-directory: infra-as-code/terraform/scripts
+      - name: Install AWS IAM Authenticator
+        run: |
+          curl -o aws-iam-authenticator https://amazon-eks.s3.us-west-2.amazonaws.com/1.19.6/2021-01-05/bin/linux/amd64/aws-iam-authenticator
+          chmod +x ./aws-iam-authenticator
+          sudo mv ./aws-iam-authenticator /usr/local/bin/aws-iam-authenticator
+          aws-iam-authenticator version  
+      - name: Generate kubeconfig
+        run: |
+          aws eks update-kubeconfig --region ${{ secrets.AWS_REGION }} --name $CLUSTER_NAME
+          cat ~/.kube/config > kubeconfig
+      - name: Deleting Loadbalancer 
+        run: kubectl delete svc nginx-ingress-controller -n egov       
       - name: Terraform Init - remotestate
         run: terraform init
         working-directory: infra-as-code/terraform/sample-aws/remote-state
