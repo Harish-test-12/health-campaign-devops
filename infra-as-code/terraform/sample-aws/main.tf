@@ -127,10 +127,10 @@ resource "kubernetes_annotations" "example" {
   }
 }
 
-resource "aws_iam_role_policy_attachment" "cluster_AmazonEBSCSIDriverPolicy" {
-  policy_arn = "arn:aws:iam::aws:policy/service-role/AmazonEBSCSIDriverPolicy"
-  role       = "${aws_iam_role.eks_iam.name}"
-}
+# resource "aws_iam_role_policy_attachment" "cluster_AmazonEBSCSIDriverPolicy" {
+#   policy_arn = "arn:aws:iam::aws:policy/service-role/AmazonEBSCSIDriverPolicy"
+#   role       = "${aws_iam_role.eks_iam.name}"
+# }
 
 resource "aws_iam_role_policy_attachment" "cluster_AmazonEC2FullAccess" {
   policy_arn = "arn:aws:iam::aws:policy/AmazonEC2FullAccess"
