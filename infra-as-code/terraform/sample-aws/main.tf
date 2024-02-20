@@ -110,6 +110,11 @@ resource "aws_iam_role" "eks_iam" {
   })
 }
 
+resource "aws_iam_role_policy_attachment" "cluster_AmazonEBSCSIDriverPolicy" {
+  policy_arn = "arn:aws:iam::aws:policy/service-role/AmazonEBSCSIDriverPolicy"
+  role       = module.eks.aws_iam_role.cluster[0].name
+}
+
 resource "kubernetes_annotations" "example" {
   api_version = "v1"
   kind        = "ServiceAccount"
