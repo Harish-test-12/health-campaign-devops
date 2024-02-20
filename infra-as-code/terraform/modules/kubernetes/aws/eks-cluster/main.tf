@@ -4,31 +4,32 @@
 #  * EC2 Security Group to allow networking traffic with EKS cluster
 #  * EKS Cluster
 #
-
 resource "aws_iam_role" "eks_iam" {
-  name = "${var.cluster_name}-eks-iam"
+  name = "${var.cluster_name}-eks"
 
-  assume_role_policy = <<POLICY
-{
-  "Version": "2012-10-17",
-  "Statement": [
-    {
-      "Effect": "Allow",
-      "Principal": {
-        "Service": "eks.amazonaws.com"
-      },
-      "Action": "sts:AssumeRole"
-    }
-  ]
-}
-POLICY
+  assume_role_policy = jsonencode({
+    Version = "2012-10-17",
+    Statement = [
+      {
+        Sid = "EKSWorkerAssumeRole"
+        Effect = "Allow",
+        Principal = {
+          Federated = "arn:aws:iam::${data.aws_caller_identity.current.account_id}:oidc-provider/${replace(data.aws_eks_cluster.cluster.identity[0].oidc[0].issuer, "https://", "")}"
+        },
+        Action = "sts:AssumeRoleWithWebIdentity",
+        Condition = {
+          StringEquals = {
+            "${replace(data.aws_eks_cluster.cluster.identity[0].oidc[0].issuer, "https://", "")}:sub" = "system:serviceaccount:kube-system:ebs-csi-controller-sa"
+          }
+        }
+      }
+    ]
+  })
 
-  tags = "${
-    map(
-      "kubernetes.io/cluster/${var.cluster_name}", "owned",
-      "KubernetesCluster", "${var.cluster_name}"
-    )
-  }"
+  tags = {
+    "kubernetes.io/cluster/${var.cluster_name}" = "owned",
+    "KubernetesCluster" = "${var.cluster_name}"
+  }
 }
 
 resource "aws_iam_role_policy_attachment" "cluster_AmazonEKSClusterPolicy" {
