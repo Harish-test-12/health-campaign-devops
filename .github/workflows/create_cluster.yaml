@@ -285,21 +285,20 @@ jobs:
     steps:
       - name: Checkout code
         uses: actions/checkout@v2
-      - name: Download infra-as-code folder from artifacts
-        uses: actions/download-artifact@v2
-        with:
-          name: infra-as-code-artifact
-          path: .
-      - name: Download config-as-code folder from artifacts
-        uses: actions/download-artifact@v2
-        with:
-          name: config-as-code-artifact
-          path: .
       - name: Convert YAML to ENV
         uses: dcarbone/yaml-to-env-action@main
         with:
           yaml-file: infra-as-code/terraform/sample-aws/input.yaml
           debug: true # Optional: set to true to output some debug information
+      - name: Display environment variables
+        run: |
+          echo "Cluster Name: $CLUSTER_NAME"  
+      - name: Change working directory
+        run: echo "This command is run in the current directory"
+        working-directory: infra-as-code/terraform/sample-aws/remote-state
+      - name: Updating different files based on parameters provided in input.yaml
+        run: go run init.go
+        working-directory: infra-as-code/terraform/scripts    
       - name: Terraform Init - remotestate
         run: terraform init
         working-directory: infra-as-code/terraform/sample-aws/remote-state
